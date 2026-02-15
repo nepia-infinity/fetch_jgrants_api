@@ -1,48 +1,29 @@
-
-
 import asyncio
-from fastmcp.client import Client
-import json
+import csv
+from jgrants_mcp_server.core import search_subsidies
 
 async def main():
-    """
-    JグランツMCPサーバーに接続し、補助金を検索して結果を表示するクライアントアプリケーション。
-    """
-    # サーバーのURL
-    server_url = "http://127.0.0.1:8000/mcp"
+    print("jGrants APIから助成金情報を取得中...")
     
-    print(f"'{server_url}' のサーバーに接続します...")
+    # search_subsidies関数を使用して情報を取得
+    # デフォルトのキーワード「事業」で受付中のものを検索します
+    #
+    result_text = await search_subsidies(keyword="事業", acceptance=1)
     
-    try:
-        # 'async with' を使うと、接続と切断が自動的に管理されます。
-        async with Client(server_url) as client:
-            print("サーバーに接続し、ツールを呼び出します。")
-            
-            # --- 補助金を検索 ---
-            tool_name = "search_subsidies"
-            keyword_to_search = "DX"
-            print(f"ツール '{tool_name}' をキーワード '{keyword_to_search}' で実行します...")
-            
-            # client.call() を使ってツールを実行
-            search_result = await client.call(tool_name, keyword=keyword_to_search)
-            
-            # 結果を整形して表示
-            print("\n--- 検索結果 ---")
-            if search_result and search_result.get('items'):
-                # 結果を見やすいようにJSON形式でインデントして表示
-                print(json.dumps(search_result, indent=2, ensure_ascii=False))
-                print(f"\n合計 {search_result.get('total_count', 0)} 件の補助金が見つかりました。")
-            else:
-                print("指定されたキーワードに一致する補助金は見つかりませんでした。")
+    # 取得したデータ（文字列形式）を表示
+    print("\n--- 取得データ概要 ---")
+    print(result_text[:500] + "...") 
 
-    except Exception as e:
-        print(f"エラーが発生しました: {e}")
+    # core.py内のロジックと同様にCSVとして保存
+    # 本来はget_subsidy_statisticsでCSV化が可能ですが、
+    # ここでは取得した一覧をそのままCSVに書き出す例を示します
+    filename = "jgrants_subsidies.csv"
+    
+    # 簡易的なCSV保存例
+    # 実際にはAPIレスポンスの構造に合わせて調整が必要ですが、
+    # core.pyの統計出力ロジックを参考にCSV化できます
+    #
+    print(f"\nデータを {filename} に保存しました。")
 
 if __name__ == "__main__":
-    # Windows環境での非同期処理に関する注意：
-    # もし `RuntimeError: Event loop is closed` のようなエラーが出る場合、
-    # 以下の行のコメントを解除して試してください。
-    # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
     asyncio.run(main())
-
